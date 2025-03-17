@@ -1,16 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from tensorflow.keras.preprocessing import image
-from tensorflow.keras.models import load_model
 from PIL import Image, ImageChops, ImageEnhance
-
-import os
+import tensorflow as tf
 import numpy as np
+import os
 import warnings
-# import gdown
-# Initialize Flask app
 
-warnings.filterwarnings("ignore");
+warnings.filterwarnings("ignore")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
@@ -19,79 +16,74 @@ CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 upload_dir = "./uploads"
 os.makedirs(upload_dir, exist_ok=True)
 
-# feature engineering - Error Level Analysis
-if not os.path.exists('./ELA'):
-        os.makedirs('./ELA')
+# Create directory for ELA images
+ela_dir = "./ELA"
+os.makedirs(ela_dir, exist_ok=True)
 
+# Load TFLite model
+tflite_model_path = "./model/ela_model7_resnet18_20epochs.tflite"
+
+interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+input_shape = input_details[0]['shape'][1:3]  # Get expected image size
+
+# Feature Engineering - Error Level Analysis (ELA)
 def ELA(img_path):
-        dir = f'./ELA/'
-        extension = img_path.split('.')[-1]
-        temp = "temp." + extension
-        scale_factor = 10
-        original = Image.open(img_path)
-        if(os.path.isdir(dir) == False):
-                os.mkdir(dir)
-        original.save(temp, quality=90)
-        temporary = Image.open(temp)
+    temp_path = "./ELA/temp.jpg"
+    scale_factor = 10
+    original = Image.open(img_path).convert("RGB")
+    original.save(temp_path, quality=90)
+    temporary = Image.open(temp_path)
 
-        #Compute ELA difference
-        ela_image = ImageChops.difference(original, temporary)
+    # Compute ELA difference
+    ela_image = ImageChops.difference(original, temporary)
 
-        #Enhance Contrast
-        enhancer = ImageEnhance.Contrast(ela_image)
-        ela_image = enhancer.enhance(scale_factor)
+    # Enhance Contrast
+    enhancer = ImageEnhance.Contrast(ela_image)
+    ela_image = enhancer.enhance(scale_factor)
 
-        # d = diff.load()
-        # WIDTH, HEIGHT = diff.size
-        # for x in range(WIDTH):
-        #         for y in range(HEIGHT):
-        #                 d[x, y] = tuple(k * SCALE for k in d[x, y])
-        ela_path = dir + 'ela_img.' + extension
-        ela_image.save(ela_path)
-        os.remove(temp)
-        return ela_path
-
-# Load the model once at startup
-# model_url = "https://drive.google.com/uc?id=1-KQz79KoNIjuNveqyD-eh137KfesrVsG"
-# model_path = "./model/ela_model7_resnet18_20epochs.keras"
-# if not os.path.exists(model_path):
-#     gdown.download(model_url, model_path, quiet=False)
-# model_tf = load_model(model_path)
-# model4= load_model("./model/ela_model4_xception_32epochs.keras")
-# model5= load_model("./model/ela_model5_xception_attentnion_18epochs.keras")
-model7= load_model("./model/ela_model7_resnet18_20epochs.keras")
-tensor_models = [model7]
+    ela_path = os.path.join(ela_dir, "ela_img.jpg")
+    ela_image.save(ela_path)
+    os.remove(temp_path)
+    return ela_path
 
 # Route endpoint to predict the image
 @app.route("/predict", methods=['POST'])
 def predict():
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
+
     file = request.files['file']
     file_path = os.path.join(upload_dir, file.filename)
     file.save(file_path)
-    ela_path = ELA(file_path)
-    try:
-        # Load and preprocess the image
-        # Make the prediction
-        predictions = []
-        for tf_model in tensor_models:
-            img = image.load_img(ela_path)
-            img = img.resize(tf_model.input_shape[1:-1], Image.LANCZOS)
-            img_array = np.array(img) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
-            prediction = tf_model.predict(img_array)
-            tf_pred = prediction[0][0]*100
-            print('TF Prediction:', tf_pred)
-            predictions.append(tf_pred)
 
-        maximum = np.max(predictions)
+    ela_path = ELA(file_path)
+
+    try:
+        # Load and preprocess the image for TFLite
+        img = image.load_img(ela_path, target_size=input_shape)
+        img_array = np.array(img, dtype=np.float32) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+
+        # Set the tensor input
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+
+        # Run inference
+        interpreter.invoke()
+
+        # Get the prediction result
+        prediction = interpreter.get_tensor(output_details[0]['index'])
+        tf_pred = prediction[0][0] * 100  # Convert to percentage
+
         os.remove(file_path)
         os.remove(ela_path)
-        return jsonify({'score': "{:.2f}".format(maximum)})
+        return jsonify({'score': "{:.2f}".format(tf_pred)})
+
     except Exception as e:
-      return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run()
-    # app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5001)
