@@ -13,15 +13,15 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 
 # Ensure the uploads directory exists
-upload_dir = "./uploads"
+upload_dir = "uploads"
 os.makedirs(upload_dir, exist_ok=True)
 
 # Create directory for ELA images
-ela_dir = "./ELA"
+ela_dir = "ELA"
 os.makedirs(ela_dir, exist_ok=True)
 
 # Load TFLite model
-tflite_model_path = "./model/ela_model7_resnet18_20epochs.tflite"
+tflite_model_path = "model/ela_model7_resnet18_20epochs.tflite"
 
 interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
 interpreter.allocate_tensors()
@@ -32,7 +32,7 @@ input_shape = input_details[0]['shape'][1:3]  # Get expected image size
 
 # Feature Engineering - Error Level Analysis (ELA)
 def ELA(img_path):
-    temp_path = "./ELA/temp.jpg"
+    temp_path = "ELA/temp.jpg"
     scale_factor = 10
     original = Image.open(img_path).convert("RGB")
     original.save(temp_path, quality=90)
