@@ -47,7 +47,7 @@ def ELA(img_path):
     enhancer = ImageEnhance.Contrast(ela_image)
     ela_image = enhancer.enhance(scale_factor)
 
-    ela_path = os.path.join(ela_dir, "ela_img.", extension)
+    ela_path = os.path.join(ela_dir, "ela_img." + extension)
     ela_image.save(ela_path)
     os.remove(temp_path)
     return ela_path
