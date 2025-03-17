@@ -32,7 +32,9 @@ input_shape = input_details[0]['shape'][1:3]  # Get expected image size
 
 # Feature Engineering - Error Level Analysis (ELA)
 def ELA(img_path):
-    temp_path = "ELA/temp.jpg"
+
+    extension = img_path.split('.')[-1]
+    temp_path = "ELA/temp." + extension
     scale_factor = 10
     original = Image.open(img_path).convert("RGB")
     original.save(temp_path, quality=90)
@@ -45,7 +47,7 @@ def ELA(img_path):
     enhancer = ImageEnhance.Contrast(ela_image)
     ela_image = enhancer.enhance(scale_factor)
 
-    ela_path = os.path.join(ela_dir, "ela_img.jpg")
+    ela_path = os.path.join(ela_dir, "ela_img", extension)
     ela_image.save(ela_path)
     os.remove(temp_path)
     return ela_path
