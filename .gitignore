@@ -1,3 +1,5 @@
 .venv/
 
 model/others/
+
+.DS_Store
