@@ -21,7 +21,7 @@ ela_dir = "ELA"
 os.makedirs(ela_dir, exist_ok=True)
 
 # Load TFLite model
-tflite_model_path = "model/ela_model7_resnet18_20epochs.tflite"
+tflite_model_path = "model/model.tflite"
 
 interpreter = tf.lite.Interpreter(model_path=tflite_model_path)
 interpreter.allocate_tensors()
