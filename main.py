@@ -7,7 +7,7 @@ from PIL import Image, ImageChops, ImageEnhance
 import os
 import numpy as np
 import warnings
-import gdown
+# import gdown
 # Initialize Flask app
 
 warnings.filterwarnings("ignore");
@@ -18,16 +18,6 @@ CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 # Ensure the uploads directory exists
 upload_dir = "./uploads"
 os.makedirs(upload_dir, exist_ok=True)
-
-# # Define transformation (same as training)
-# transform = transforms.Compose([
-#     transforms.Resize((128, 128)),  # Resize images
-#     transforms.ToTensor(),          # Convert to PyTorch Tensor
-#     transforms.Normalize((0.5,), (0.5,))  # Normalize if needed
-# ])
-
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 # feature engineering - Error Level Analysis
 if not os.path.exists('./ELA'):
@@ -62,15 +52,15 @@ def ELA(img_path):
         return ela_path
 
 # Load the model once at startup
-model_url = "https://drive.google.com/uc?id=1-KQz79KoNIjuNveqyD-eh137KfesrVsG"
-model_path = "./model/ela_model7_resnet18_20epochs.keras"
-if not os.path.exists(model_path):
-    gdown.download(model_url, model_path, quiet=False)
-model_tf = load_model(model_path)
+# model_url = "https://drive.google.com/uc?id=1-KQz79KoNIjuNveqyD-eh137KfesrVsG"
+# model_path = "./model/ela_model7_resnet18_20epochs.keras"
+# if not os.path.exists(model_path):
+#     gdown.download(model_url, model_path, quiet=False)
+# model_tf = load_model(model_path)
 # model4= load_model("./model/ela_model4_xception_32epochs.keras")
 # model5= load_model("./model/ela_model5_xception_attentnion_18epochs.keras")
-# model7= load_model("./model/ela_model7_resnet18_20epochs.keras")
-tensor_models = [model_tf]
+model7= load_model("./model/ela_model7_resnet18_20epochs.keras")
+tensor_models = [model7]
 
 # Route endpoint to predict the image
 @app.route("/predict", methods=['POST'])
