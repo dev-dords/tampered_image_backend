@@ -19,14 +19,14 @@ CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 upload_dir = "./uploads"
 os.makedirs(upload_dir, exist_ok=True)
 
-# Define transformation (same as training)
-transform = transforms.Compose([
-    transforms.Resize((128, 128)),  # Resize images
-    transforms.ToTensor(),          # Convert to PyTorch Tensor
-    transforms.Normalize((0.5,), (0.5,))  # Normalize if needed
-])
+# # Define transformation (same as training)
+# transform = transforms.Compose([
+#     transforms.Resize((128, 128)),  # Resize images
+#     transforms.ToTensor(),          # Convert to PyTorch Tensor
+#     transforms.Normalize((0.5,), (0.5,))  # Normalize if needed
+# ])
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 # feature engineering - Error Level Analysis
@@ -71,9 +71,6 @@ model_tf = load_model(model_path)
 # model5= load_model("./model/ela_model5_xception_attentnion_18epochs.keras")
 # model7= load_model("./model/ela_model7_resnet18_20epochs.keras")
 tensor_models = [model_tf]
-# Load the PyTorch model
-# torch1_path = "./model/resnet18_2_ela_model.pth"
-# torch1 = torch.load(torch1_path, weights_only = False, map_location=torch.device('cpu'))
 
 # Route endpoint to predict the image
 @app.route("/predict", methods=['POST'])

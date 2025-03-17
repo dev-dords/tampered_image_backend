@@ -1,3 +1,13 @@
+# # Define transformation (same as training)
+# transform = transforms.Compose([
+#     transforms.Resize((128, 128)),  # Resize images
+#     transforms.ToTensor(),          # Convert to PyTorch Tensor
+#     transforms.Normalize((0.5,), (0.5,))  # Normalize if needed
+# ])
+
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 
 # Load the PyTorch model
 # torch1_path = "./model/resnet18_2_ela_model.pth"
